@@ -45,19 +45,19 @@ async def add_game(interaction: discord.Interaction, game_name: str):
         await interaction.response.send_message(f"Game '{game_name}' is already being tracked.")
 
 
-# Command: Show all games
+# Command: Show all games in alphabetical order
 @bot.tree.command(name="showgames", description="Show all games currently being managed")
 async def show_games(interaction: discord.Interaction):
-    c.execute("SELECT game_name FROM games")
+    # Modify the SQL query to sort the results alphabetically
+    c.execute("SELECT game_name FROM games ORDER BY game_name ASC")
     games = c.fetchall()
     if games:
         game_list = "\n".join([game[0] for game in games])
-        await interaction.response.send_message(f"Current games:\n{game_list}")
+        await interaction.response.send_message(f"Current games (alphabetical order):\n{game_list}")
     else:
         await interaction.response.send_message("No games are currently being tracked.")
+
         
-
-
 # Command: Remove a game
 @bot.tree.command(name="removegame", description="Remove a game from the list")
 async def remove_game(interaction: discord.Interaction, game_name: str):

@@ -28,7 +28,7 @@ The bot uses SQLite to store game and user information in two tables: `games` an
    - Navigate to the "Bot" section and click "Add Bot".
 
 3. **Give the Bot Permissions**:
-   - Under the "Bot" section, scroll down to "OAuth2" and select the permissions your bot needs (To be Updated, `Send Messages`, `Manage Roles`, etc.).
+   - Under the "Bot" section, scroll down to "OAuth2" and select the permissions your bot needs (To be Updated, `Send Messages`, `Use Slash Commands`, etc.).
 
 4. **Get the Bot Token**:
    - In the "Bot" section, click "Copy" under the "Token" section. **Keep this token secure**.
@@ -36,7 +36,7 @@ The bot uses SQLite to store game and user information in two tables: `games` an
 5. **Generate a URL**:
    - Go to the "OAuth2" section, and select "URL Generator".
    - Under "Scopes", select `bot`.
-   - Under "Bot Permissions", select the permissions you need. (Send Messages, Manage Messages, Use Slash Commands)
+   - Under "Bot Permissions", select the permissions you need. (`Send Messages`, `Manage Messages`, `Use Slash Commands`)
    - Copy the generated URL.
 
 6. **Invite the Bot to Your Discord Server**:

@@ -5,12 +5,14 @@ Discord bot designed to help achievement hunters organize games they want to pla
 
 - **/showgames** - Displays a unique list of all the games currently managed by the bot.
 - **/addgame "game name"** - Adds a game to the list of managed games.
-- **/removegame "game name"** - Removes a game from the list of managed games.
 - **/whoplays "game name"** - Displays a list of users who have added their name to the specified game.
 - **/addme "game name"** - Adds the user to the specified game’s list of players.
 - **/removeme "game name"** - Removes the user from the specified game’s list of players.
 - **/showme** - Displays a list of all the games the user is added to.
 - **/showuser "@user"** - Displays a list of all the games the specified user is added to.
+- **/mostplayed** - Show the top 5 most popular games
+- **/gameinfo "game name"** - Similar to whoplays but includes a user count
+- **/removegame "game name"** - Remove a game from the list (Admin Only)
 
 ### Database:
 
@@ -34,7 +36,7 @@ The bot uses SQLite to store game and user information in two tables: `games` an
 5. **Generate a URL**:
    - Go to the "OAuth2" section, and select "URL Generator".
    - Under "Scopes", select `bot`.
-   - Under "Bot Permissions", select the permissions you need.
+   - Under "Bot Permissions", select the permissions you need. (Send Messages, Manage Messages, Use Slash Commands)
    - Copy the generated URL.
 
 6. **Invite the Bot to Your Discord Server**:

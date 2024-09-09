@@ -57,9 +57,10 @@ async def show_games(interaction: discord.Interaction):
     else:
         await interaction.response.send_message("No games are currently being tracked.")
 
-        
+
 # Command: Remove a game
 @bot.tree.command(name="removegame", description="Remove a game from the list")
+@commands.has_permissions(administrator=True)
 async def remove_game(interaction: discord.Interaction, game_name: str):
     c.execute("SELECT id FROM games WHERE game_name = ?", (game_name,))
     game = c.fetchone()
@@ -151,6 +152,67 @@ async def show_user(interaction: discord.Interaction, user: discord.User):
     else:
         await interaction.response.send_message(f"{user.mention} is not signed up for any games.")
 
+
+# Command: Show the most popular games by player count
+@bot.tree.command(name="mostplayed", description="Show the top 5 most popular games")
+async def popular_games(interaction: discord.Interaction):
+    c.execute('''SELECT g.game_name, COUNT(ug.user_id) as player_count
+                 FROM games g
+                 JOIN user_games ug ON g.id = ug.game_id
+                 GROUP BY g.game_name
+                 ORDER BY player_count DESC
+                 LIMIT 5''')
+    games = c.fetchall()
+    if games:
+        game_list = "\n".join([f"{game[0]} - {game[1]} players" for game in games])
+        await interaction.response.send_message(f"Top 5 most popular games:\n{game_list}")
+    else:
+        await interaction.response.send_message("No games have any players signed up.")
+
+
+# Command: Show detailed information about a specific game
+@bot.tree.command(name="gameinfo", description="Get information about a specific game")
+async def game_info(interaction: discord.Interaction, game_name: str):
+    c.execute("SELECT id FROM games WHERE game_name = ?", (game_name,))
+    game = c.fetchone()
+    if game:
+        game_id = game[0]
+        c.execute("SELECT user_name FROM user_games WHERE game_id = ?", (game_id,))
+        users = c.fetchall()
+        user_list = "\n".join([user[0] for user in users]) if users else "No players yet."
+        player_count = len(users)
+        await interaction.response.send_message(f"Game: {game_name}\nPlayers: {player_count}\nUser List:\n{user_list}")
+    else:
+        await interaction.response.send_message(f"Game '{game_name}' not found.")
+
+
+# Command: Show a list of all available commands
+@bot.tree.command(name="help", description="Show all available bot commands")
+async def help_command(interaction: discord.Interaction):
+    help_text = """
+    **Available Commands:**
+    /addgame "game name" - Add a game to the list
+    /showgames - Show all games currently being managed
+    /whoplays "game name" - Show who is playing a specific game
+    /addme "game name" - Add yourself to a game's player list
+    /removeme "game name" - Remove yourself from a game's player list
+    /showme - Show all games you are added to
+    /showuser "@user" - Show all games a user is added to
+    /mostplayed - Show the top 5 most popular games
+    /gameinfo "game name" - Similar to whoplays but includes a user count
+    /removegame "game name" - Remove a game from the list (Admin Only)
+    """
+    await interaction.response.send_message(help_text)
+    
+# Command: Show bot version and information
+@bot.tree.command(name="botversion", description="Show bot version and additional information")
+async def bot_version(interaction: discord.Interaction):
+    version_info = """
+    **Bot Version:** 1.0
+    **Created by:** Tide44
+    **GitHub:** [CabinSquadBot](https://github.com/Tide44-cmd/CabinSquadBot)
+    """
+    await interaction.response.send_message(version_info)
 
 # Run the bot with your token
 bot.run('YOUR_DISCORD_BOT_TOKEN')

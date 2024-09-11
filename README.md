@@ -48,4 +48,4 @@ The bot uses SQLite to store game and user information in two tables: `games` an
      - Ensure you have the necessary environment (Python).
      - Run your bot script from your local machine. It will create the SQLite DB in the same section you run it from
    - **On a Raspberry Pi**:
-     - Follow the instructions for [here](https://github.com/Tide44-cmd/CabinSquadBot/edit/master/Host%20on%20raspberry%20pi%20zero.md).
+     - Follow the instructions for [here](https://github.com/Tide44-cmd/CabinSquadBot/blob/master/Host%20on%20raspberry%20pi%20zero.md).

@@ -1,6 +1,10 @@
 import discord
 from discord.ext import commands
 import sqlite3
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # Bot configuration
 intents = discord.Intents.default()
@@ -214,5 +218,5 @@ async def bot_version(interaction: discord.Interaction):
     """
     await interaction.response.send_message(version_info)
 
-# Run the bot with your token
-bot.run('YOUR_DISCORD_BOT_TOKEN')
+token = os.getenv('DISCORD_TOKEN')
+bot.run(token)

@@ -28,6 +28,12 @@ c.execute('''CREATE TABLE IF NOT EXISTS user_games (
                 game_id INTEGER,
                 FOREIGN KEY (game_id) REFERENCES games(id)
             )''')
+c.execute('''CREATE TABLE IF NOT EXISTS logs (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user TEXT NOT NULL,
+    command TEXT NOT NULL,
+    game_name TEXT
+)''')
 
 conn.commit()
 # Sync slash commands with Discord
@@ -43,6 +49,8 @@ async def on_ready():
 async def add_game(interaction: discord.Interaction, game_name: str):
     try:
         c.execute("INSERT INTO games (game_name) VALUES (?)", (game_name,))
+        conn.commit()
+        c.execute("INSERT INTO logs (user, command, game_name) VALUES (?, ?, ?)", (str(interaction.user), "addgame", game_name))
         conn.commit()
         await interaction.response.send_message(f"Game '{game_name}' has been added.")
     except sqlite3.IntegrityError:
@@ -72,6 +80,8 @@ async def remove_game(interaction: discord.Interaction, game_name: str):
         game_id = game[0]
         c.execute("DELETE FROM games WHERE id = ?", (game_id,))
         c.execute("DELETE FROM user_games WHERE game_id = ?", (game_id,))
+        conn.commit()
+        c.execute("INSERT INTO logs (user, command, game_name) VALUES (?, ?, ?)", (str(interaction.user), "removegame", game_name))
         conn.commit()
         await interaction.response.send_message(f"Game '{game_name}' has been removed.")
     else:
@@ -212,11 +222,50 @@ async def help_command(interaction: discord.Interaction):
 @bot.tree.command(name="botversion", description="Show bot version and additional information")
 async def bot_version(interaction: discord.Interaction):
     version_info = """
-    **Bot Version:** 1.0
+    **Bot Version:** 1.1
     **Created by:** Tide44
     **GitHub:** [CabinSquadBot](https://github.com/Tide44-cmd/CabinSquadBot)
     """
     await interaction.response.send_message(version_info)
+  
+# Rename a game in the database (Admin only)
+@bot.tree.command(name="renamegame", description="Rename a game in the database (Admin only)")
+@commands.has_permissions(administrator=True)
+async def rename_game(interaction: discord.Interaction, game_name: str, new_name: str):
+    c.execute("UPDATE games SET game_name = ? WHERE game_name = ?", (new_name, game_name))
+    conn.commit()
+    c.execute("INSERT INTO logs (user, command, game_name) VALUES (?, ?, ?)", (str(interaction.user), "renamegame", f"{game_name} -> {new_name}"))
+    conn.commit()
+    await interaction.response.send_message(f"Game '{game_name}' has been renamed to '{new_name}'.")
+  
+# Check who added a specific game (Admin only)  
+@bot.tree.command(name="whoadded", description="Check who added a specific game (Admin only)")
+@commands.has_permissions(administrator=True)
+async def who_added(interaction: discord.Interaction, game_name: str):
+    c.execute("SELECT user FROM logs WHERE command = 'addgame' AND game_name = ?", (game_name,))
+    users = c.fetchall()
+    if users:
+        user_list = "\n".join([user[0] for user in users])
+        await interaction.response.send_message(f"Users who added '{game_name}':\n{user_list}")
+    else:
+        await interaction.response.send_message(f"No records found for the game '{game_name}'.")
+        
+        
+# Remove a user from all games (Admin only)        
+@bot.tree.command(name="removeuser", description="Remove a user from all games (Admin only)")
+@commands.has_permissions(administrator=True)
+async def remove_user(interaction: discord.Interaction, user: discord.User):
+    user_id = str(user.id)
+    
+    # Remove the user from all games
+    c.execute("DELETE FROM user_games WHERE user_id = ?", (user_id,))
+    conn.commit()
+
+    # Log the action
+    c.execute("INSERT INTO logs (user, command, game_name) VALUES (?, ?, ?)", (str(interaction.user), "removeuser", f"Removed {user} from all games"))
+    conn.commit()
+
+    await interaction.response.send_message(f"User '{user}' has been removed from all games.")
 
 token = os.getenv('DISCORD_TOKEN')
 bot.run(token)

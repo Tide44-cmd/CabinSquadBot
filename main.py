@@ -142,16 +142,21 @@ async def remove_me(interaction: discord.Interaction, game_name: str):
 
 
 # Command: Show games the user is added to
-@bot.tree.command(name="showme", description="Show all games you are added to")
+@bot.tree.command(name="showme", description="Show all games you're added to, alphabetized")
 async def show_me(interaction: discord.Interaction):
     user_id = str(interaction.user.id)
-    c.execute("SELECT game_name FROM games g JOIN user_games ug ON g.id = ug.game_id WHERE ug.user_id = ?", (user_id,))
+    c.execute('''SELECT g.game_name 
+                 FROM games g
+                 JOIN user_games ug ON g.id = ug.game_id
+                 WHERE ug.user_id = ?
+                 ORDER BY g.game_name ASC''', (user_id,))
     games = c.fetchall()
+    
     if games:
         game_list = "\n".join([game[0] for game in games])
-        await interaction.response.send_message(f"Games you are playing:\n{game_list}")
+        await interaction.response.send_message(f"Games you're added to (alphabetized):\n{game_list}")
     else:
-        await interaction.response.send_message(f"{interaction.user.mention}, you are not signed up for any games.")
+        await interaction.response.send_message("You haven't signed up for any games.")
 
 
 # Command: Show games a specific user is added to
@@ -217,7 +222,8 @@ async def help_command(interaction: discord.Interaction):
     /removegame "game name" - Remove a game from the list (Admin Only)
     """
     await interaction.response.send_message(help_text)
-    
+
+
 # Command: Show bot version and information
 @bot.tree.command(name="botversion", description="Show bot version and additional information")
 async def bot_version(interaction: discord.Interaction):
@@ -227,7 +233,8 @@ async def bot_version(interaction: discord.Interaction):
     **GitHub:** [CabinSquadBot](https://github.com/Tide44-cmd/CabinSquadBot)
     """
     await interaction.response.send_message(version_info)
-  
+
+
 # Rename a game in the database (Admin only)
 @bot.tree.command(name="renamegame", description="Rename a game in the database (Admin only)")
 @commands.has_permissions(administrator=True)
@@ -237,7 +244,8 @@ async def rename_game(interaction: discord.Interaction, game_name: str, new_name
     c.execute("INSERT INTO logs (user, command, game_name) VALUES (?, ?, ?)", (str(interaction.user), "renamegame", f"{game_name} -> {new_name}"))
     conn.commit()
     await interaction.response.send_message(f"Game '{game_name}' has been renamed to '{new_name}'.")
-  
+
+
 # Check who added a specific game (Admin only)  
 @bot.tree.command(name="whoadded", description="Check who added a specific game (Admin only)")
 @commands.has_permissions(administrator=True)
@@ -249,8 +257,26 @@ async def who_added(interaction: discord.Interaction, game_name: str):
         await interaction.response.send_message(f"Users who added '{game_name}':\n{user_list}")
     else:
         await interaction.response.send_message(f"No records found for the game '{game_name}'.")
-        
-        
+
+
+# Show a list of games with no users signed up
+@bot.tree.command(name="notplayed", description="Show a list of games with no users signed up")
+async def not_played(interaction: discord.Interaction):
+    # Select games that have no entries in user_games
+    c.execute('''SELECT g.game_name 
+                 FROM games g
+                 LEFT JOIN user_games ug ON g.id = ug.game_id
+                 WHERE ug.game_id IS NULL
+                 ORDER BY g.game_name ASC''')
+    games = c.fetchall()
+
+    if games:
+        game_list = "\n".join([game[0] for game in games])
+        await interaction.response.send_message(f"Games with no users signed up:\n{game_list}")
+    else:
+        await interaction.response.send_message("All games have at least one user signed up.")
+
+
 # Remove a user from all games (Admin only)        
 @bot.tree.command(name="removeuser", description="Remove a user from all games (Admin only)")
 @commands.has_permissions(administrator=True)

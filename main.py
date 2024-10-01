@@ -228,7 +228,7 @@ async def help_command(interaction: discord.Interaction):
 @bot.tree.command(name="botversion", description="Show bot version and additional information")
 async def bot_version(interaction: discord.Interaction):
     version_info = """
-    **Bot Version:** 1.1
+    **Bot Version:** 1.2
     **Created by:** Tide44
     **GitHub:** [CabinSquadBot](https://github.com/Tide44-cmd/CabinSquadBot)
     """

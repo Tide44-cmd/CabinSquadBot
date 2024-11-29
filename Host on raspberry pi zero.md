@@ -96,6 +96,11 @@ Replace the placeholder token with your actual Discord bot token in the followin
 ```bash
 bot.run('YOUR_DISCORD_BOT_TOKEN')
 ```
+or create a .env to store the Discord bot token
+
+```bash
+nano .env
+```
 Save and exit (Ctrl + X, then Y and Enter).
 
 ## 5. Run the Discord Bot

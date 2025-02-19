@@ -9,6 +9,8 @@ load_dotenv()
 # Bot configuration
 intents = discord.Intents.default()
 intents.message_content = True
+intents.guilds = True  # Make sure this is enabled!
+intents.members = True  # Needed if you're checking roles!
 bot = commands.Bot(command_prefix="/", intents=intents)
 
 # SQLite Database setup

@@ -57,17 +57,24 @@ async def add_game(interaction: discord.Interaction, game_name: str):
         await interaction.response.send_message(f"Game '{game_name}' is already being tracked.")
 
 
-# Command: Show all games in alphabetical order
+# Command: Show all games in alphabetical order with user count
 @bot.tree.command(name="showgames", description="Show all games currently being managed")
 async def show_games(interaction: discord.Interaction):
-    # Modify the SQL query to sort the results alphabetically
-    c.execute("SELECT game_name FROM games ORDER BY game_name ASC")
+    c.execute('''
+        SELECT g.game_name, COUNT(ug.user_id) as player_count
+        FROM games g
+        LEFT JOIN user_games ug ON g.id = ug.game_id
+        GROUP BY g.game_name
+        ORDER BY g.game_name ASC
+    ''')
     games = c.fetchall()
+    
     if games:
-        game_list = "\n".join([game[0] for game in games])
+        game_list = "\n".join([f"{game[0]} ({game[1]})" for game in games])
         await interaction.response.send_message(f"Current games (alphabetical order):\n{game_list}")
     else:
         await interaction.response.send_message("No games are currently being tracked.")
+
 
 
 # Command: Remove a game
@@ -204,6 +211,17 @@ async def game_info(interaction: discord.Interaction, game_name: str):
     else:
         await interaction.response.send_message(f"Game '{game_name}' not found.")
 
+# Command: Show a list of distinct users who are signed up for at least one game
+@bot.tree.command(name="distinctusers", description="Show a list of unique users who have signed up for at least one game")
+async def distinct_users(interaction: discord.Interaction):
+    c.execute("SELECT DISTINCT user_name FROM user_games ORDER BY user_name ASC")
+    users = c.fetchall()
+
+    if users:
+        user_list = "\n".join([user[0] for user in users])
+        await interaction.response.send_message(f"Distinct users signed up for games:\n{user_list}")
+    else:
+        await interaction.response.send_message("No users are currently signed up for any games.")
 
 # Command: Show a list of all available commands
 @bot.tree.command(name="help", description="Show all available bot commands")
@@ -292,6 +310,23 @@ async def remove_user(interaction: discord.Interaction, user: discord.User):
     conn.commit()
 
     await interaction.response.send_message(f"User '{user}' has been removed from all games.")
+
+# Command: Remove a user from all games manually using their username (Admin only)
+@bot.tree.command(name="removeusermanual", description="Remove a user from all games using their username (Admin only)")
+@commands.has_permissions(administrator=True)
+async def remove_user_manual(interaction: discord.Interaction, username: str):
+    # Remove the user from all games
+    c.execute("DELETE FROM user_games WHERE user_name = ?", (username,))
+    conn.commit()
+
+    # Log the action
+    c.execute("INSERT INTO logs (user, command, game_name) VALUES (?, ?, ?)", 
+              (str(interaction.user), "removeusermanual", f"Removed {username} from all games"))
+    conn.commit()
+
+    await interaction.response.send_message(f"User '{username}' has been removed from all games.")
+
+
 
 token = os.getenv('DISCORD_TOKEN')
 bot.run(token)

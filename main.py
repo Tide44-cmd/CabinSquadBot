@@ -59,7 +59,7 @@ async def add_game(interaction: discord.Interaction, game_name: str):
         await interaction.response.send_message(f"Game '{game_name}' is already being tracked.")
 
 
-# Command: Show all games in alphabetical order with user count
+# Command: Show all games in alphabetical order with user count, handling message length limits
 @bot.tree.command(name="showgames", description="Show all games currently being managed")
 async def show_games(interaction: discord.Interaction):
     c.execute('''
@@ -71,11 +71,33 @@ async def show_games(interaction: discord.Interaction):
     ''')
     games = c.fetchall()
     
-    if games:
-        game_list = "\n".join([f"{game[0]} ({game[1]})" for game in games])
-        await interaction.response.send_message(f"Current games (alphabetical order):\n{game_list}")
-    else:
+    if not games:
         await interaction.response.send_message("No games are currently being tracked.")
+        return
+    
+    # Prepare game list with user count
+    game_entries = [f"{game[0]} ({game[1]})" for game in games]
+    
+    # Discord message limit safety buffer
+    message_limit = 1900  
+    messages = []
+    current_message = "Current games (alphabetical order):\n"
+    
+    for game_entry in game_entries:
+        if len(current_message) + len(game_entry) + 1 > message_limit:
+            messages.append(current_message)  # Store full message
+            current_message = game_entry + "\n"  # Start new message
+        else:
+            current_message += game_entry + "\n"
+    
+    if current_message:  # Add remaining entries if any
+        messages.append(current_message)
+
+    # Send the messages sequentially
+    await interaction.response.send_message(messages[0])
+    for message in messages[1:]:
+        await interaction.followup.send(message)
+
 
 
 
